@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESB Grid Capacity — Where Ireland's grid still has room</title>
+<meta name="description" content="An interactive map of spare transformer capacity across Ireland's electricity network, built from ESB Networks' public capacity heatmap.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="title-block">
+    <span class="title-block__name">ESB Grid Capacity</span>
+    <span class="title-block__meta">Ireland &middot; Public Capacity Heatmap</span>
+  </div>
+  <nav class="site-nav">
+    <a href="#map">Map</a>
+    <a href="#model">What predicts constraint</a>
+    <a href="#about">About the data</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="hero__text">
+      <h1>Where the grid<br>still has room</h1>
+      <p class="hero__lede">
+        An interactive map of spare transformer capacity across Ireland's
+        electricity network — built from ESB Networks' public capacity
+        heatmap — plus a model of what predicts where the grid runs out
+        of room.
+      </p>
+
+      <dl class="stat-row" id="hero-stats">
+        <div class="stat-box">
+          <dt>Substations mapped</dt>
+          <dd id="stat-total">&hellip;</dd>
+        </div>
+        <div class="stat-box">
+          <dt>Constrained at some point</dt>
+          <dd id="stat-constrained-pct">&hellip;</dd>
+        </div>
+        <div class="stat-box">
+          <dt>Firm generation headroom</dt>
+          <dd id="stat-available-mw">&hellip;</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="hero__art" aria-hidden="true">
+      <!-- Hand-drawn single-line diagram: source bus -> transformer -> feeders,
+           one feeder terminating "constrained" (copper/red), one "available" (green).
+           Decorative; grounded in real electrical single-line-diagram notation. -->
+      <svg viewBox="0 0 320 340" xmlns="http://www.w3.org/2000/svg" class="sld">
+        <line x1="60" y1="30" x2="260" y2="30" class="sld__line"/>
+        <circle cx="60" cy="30" r="4" class="sld__node"/>
+        <circle cx="260" cy="30" r="4" class="sld__node"/>
+        <line x1="160" y1="30" x2="160" y2="70" class="sld__line"/>
+        <circle cx="160" cy="90" r="20" class="sld__coil"/>
+        <circle cx="160" cy="118" r="20" class="sld__coil"/>
+        <line x1="160" y1="138" x2="160" y2="170" class="sld__line"/>
+
+        <line x1="160" y1="170" x2="80" y2="230" class="sld__line"/>
+        <line x1="160" y1="170" x2="160" y2="230" class="sld__line"/>
+        <line x1="160" y1="170" x2="240" y2="230" class="sld__line"/>
+
+        <circle cx="80" cy="240" r="7" class="sld__terminal sld__terminal--constrained"/>
+        <circle cx="160" cy="240" r="7" class="sld__terminal sld__terminal--constrained"/>
+        <circle cx="240" cy="240" r="7" class="sld__terminal sld__terminal--available"/>
+
+        <line x1="80" y1="247" x2="80" y2="280" class="sld__line sld__line--dim"/>
+        <line x1="160" y1="247" x2="160" y2="280" class="sld__line sld__line--dim"/>
+        <line x1="240" y1="247" x2="240" y2="280" class="sld__line sld__line--dim"/>
+      </svg>
+      <div class="sld__key">
+        <span><i class="sld__swatch sld__swatch--available"></i>Headroom available</span>
+        <span><i class="sld__swatch sld__swatch--constrained"></i>Constrained</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="map" class="map-section">
+    <div class="map-section__head">
+      <h2>The capacity map</h2>
+      <p>
+        Every marker is a transformer or substation. Colour shows available
+        headroom before the parent network becomes the limiting factor —
+        toggle between demand headroom (new load: EV chargers, heat pumps,
+        housing) and generation headroom (new solar or wind connections).
+      </p>
+    </div>
+
+    <div class="map-panel">
+      <aside class="map-legend" id="map-legend">
+        <div class="map-legend__group" role="group" aria-label="Capacity layer">
+          <span class="map-legend__label">Layer</span>
+          <button type="button" class="layer-toggle" data-layer="demand" aria-pressed="true">Demand headroom</button>
+          <button type="button" class="layer-toggle" data-layer="generation" aria-pressed="false">Generation headroom</button>
+        </div>
+
+        <div class="map-legend__scale" id="map-legend-scale">
+          <!-- populated by map.js to match the active layer -->
+        </div>
+
+        <label class="map-legend__filter">
+          <input type="checkbox" id="filter-unconstrained">
+          Only show unconstrained
+        </label>
+
+        <p class="map-legend__note" id="map-hover-detail">
+          Hover or tap a marker for details.
+        </p>
+      </aside>
+
+      <div id="leaflet-map" class="leaflet-map"></div>
+    </div>
+  </section>
+
+  <section id="model" class="model-section">
+    <div class="model-section__head">
+      <h2>What predicts constraint</h2>
+      <p>
+        A classifier trained on transformer specifications — capacity,
+        voltage class, structure type — to predict whether a substation
+        sits behind a constrained parent connection.
+      </p>
+    </div>
+
+    <div class="model-panel">
+      <div class="model-card" id="model-metrics">
+        <h3>Model performance</h3>
+        <div class="model-card__body">
+          <p class="model-card__pending">Results pending — Step 3/4 of the pipeline.</p>
+        </div>
+      </div>
+      <div class="model-card" id="feature-importance-chart">
+        <h3>Feature importance</h3>
+        <div class="model-card__body">
+          <p class="model-card__pending">Chart pending — Step 3/4 of the pipeline.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="about-section">
+    <h2>About the data</h2>
+    <p>
+      Sourced from ESB Networks' publicly available capacity heatmap
+      export (July 2026), covering roughly 46,500 transformers and
+      substations across Ireland. Each record reports installed capacity,
+      current commitments, and — where a downstream bottleneck exists —
+      the capacity that would be available if the parent constraint were
+      resolved.
+    </p>
+    <p>
+      Data is processed offline (cleaning, feature parsing, model
+      training) and served here as static files — this page does not
+      run any live inference or fetch the ESB source directly.
+    </p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="title-block">
+    <span class="title-block__name">ESB Grid Capacity</span>
+    <span class="title-block__meta">Data: ESB Networks capacity heatmap, July 2026</span>
+  </div>
+  <a href="#" class="site-footer__repo">View source</a>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="js/map.js"></script>
+<script src="js/charts.js"></script>
+</body>
+</html>

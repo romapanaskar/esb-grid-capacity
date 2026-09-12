@@ -1,0 +1,12 @@
+# --- Data pipeline (Steps 1-2) ---
+pandas>=2.2
+openpyxl>=3.1       # reads the raw .xlsx heatmap export
+pyarrow>=14          # parquet read/write for data/interim + data/processed
+
+# --- Modeling (Step 3, added when we get there) ---
+scikit-learn>=1.4
+xgboost>=2.0
+
+# --- Notebook / EDA (optional, for notebooks/exploration.ipynb) ---
+jupyter>=1.0
+matplotlib>=3.8

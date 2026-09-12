@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-09-08T22:29:40+00:00",
+  "target": "is_constrained",
+  "base_rate_constrained": 0.7221,
+  "n_train": 37220,
+  "n_test": 9305,
+  "models": [
+    {
+      "name": "Logistic Regression (baseline)",
+      "precision": 0.7721,
+      "recall": 0.6367,
+      "f1": 0.6979,
+      "roc_auc": 0.5955
+    },
+    {
+      "name": "XGBoost",
+      "precision": 0.8765,
+      "recall": 0.9327,
+      "f1": 0.9037,
+      "roc_auc": 0.9323
+    }
+  ],
+  "feature_importance": [
+    {
+      "feature": "num__sibling_count",
+      "label": "Substations sharing the same parent",
+      "importance": 0.2579
+    },
+    {
+      "feature": "cat__structure_type_Pole Substation",
+      "label": "Structure: pole substation",
+      "importance": 0.2084
+    },
+    {
+      "feature": "num__primary_kv_numeric",
+      "label": "Primary voltage (kV)",
+      "importance": 0.1564
+    },
+    {
+      "feature": "num__unit_capacity_mva",
+      "label": "Transformer unit capacity (MVA)",
+      "importance": 0.1116
+    },
+    {
+      "feature": "cat__structure_type_Kiosk Substation",
+      "label": "Structure: kiosk substation",
+      "importance": 0.075
+    },
+    {
+      "feature": "cat__structure_type_Building Structure",
+      "label": "Structure: building structure",
+      "importance": 0.0627
+    },
+    {
+      "feature": "num__installed_capacity_mva",
+      "label": "Installed capacity (MVA)",
+      "importance": 0.0401
+    },
+    {
+      "feature": "num__generation_total_committed_mw",
+      "label": "Generation committed (MW)",
+      "importance": 0.0255
+    }
+  ]
+}
