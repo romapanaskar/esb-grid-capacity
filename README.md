@@ -65,8 +65,4 @@ This project turns that raw export into three things:
   blocked — illustratively, roughly **994,000 tonnes of CO₂/year** of
   avoided-emissions potential if that capacity could connect
 
-## How it's built
 
-... (architecture, repo structure, run instructions, data source, and
-known limitations — same structure as before, updated for the 6-step
-pipeline and new files)
