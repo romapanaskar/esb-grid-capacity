@@ -10,7 +10,7 @@ room?
 
 ## The problem
 
-Ireland's electricity distribution network publishes a "capacity heatmap" —
+Ireland's electricity distribution network publishes a capacity heatmap i.e
 a snapshot of how much headroom exists at every transformer and substation
 in the country, for both new demand (EV chargers, heat pumps, housing) and
 new generation (solar, wind). It's the dataset that actually determines
